@@ -22,4 +22,4 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/src/modules/exercises/data ./src/modules/exercises/data
 
 EXPOSE 4000
-CMD ["node", "dist/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

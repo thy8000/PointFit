@@ -46,6 +46,18 @@ jobs:
       run: npm ci
       working-directory: backend
 
+    - name: Apply Migrations
+      run: npm run prisma:deploy
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hevy_clone
+
+    - name: Seed Exercise Dataset
+      run: npm run seed
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hevy_clone
+
     - name: Download Exercise Dataset
       run: npm run download-dataset
       working-directory: backend

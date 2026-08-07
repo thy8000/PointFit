@@ -78,8 +78,6 @@ const mapEquipment = (equipment: string | null | undefined): EquipmentType => {
 
 const toUrl = (uri: string) => `${BASE_IMAGE_URL}${uri.replace(/^\//, '')}`
 
-const mapExercise = (exercise: DatasetExercise): ExerciseData => {
-
 interface ExerciseData {
   name: string
   description: string | null
