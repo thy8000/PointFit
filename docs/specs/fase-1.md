@@ -1,5 +1,9 @@
 # 🏋️ FASE 1 - FUNDAÇÃO - SPEC TÉCNICA COMPLETA (ATUALIZADA)
 
+> **Status: ✅ IMPLEMENTADA** — Fase 1 concluída em 07/08/2026 (branch `feature/fase-1`).
+> Este documento foi movido de `spec.md` para `docs/specs/fase-1.md` e atualizado para
+> refletir o estado real do código. Detalhes da execução: ver [progresso](./../progress/fase-1.md).
+
 ## 📋 Visão Geral
 **Duração:** 2-3 semanas  
 **Objetivo:** Estabelecer a base sólida do projeto com backend funcional, autenticação, banco de dados e estrutura frontend, utilizando o **Exercise Dataset** gratuito como fonte de dados de exercícios.
@@ -23,7 +27,7 @@
 ## 📁 Estrutura do Projeto
 
 ```
-hevy-clone/
+PointFit/
 ├── backend/
 │   ├── src/
 │   │   ├── modules/
@@ -39,19 +43,23 @@ hevy-clone/
 │   │   │   └── exercises/
 │   │   │       ├── exercises.service.ts
 │   │   │       ├── exercises.resolver.ts
+│   │   │       ├── dataset.types.ts
 │   │   │       └── data/
-│   │   │           ├── exercises.json  # Dataset baixado
-│   │   │           └── images/         # Pasta com as imagens WebP
+│   │   │           ├── exercises.json      # Dataset baixado (400 exercícios)
+│   │   │           └── images/.gitkeep     # Imagens servidas via URL (GitHub raw)
 │   │   ├── shared/
 │   │   │   ├── database/
 │   │   │   │   └── prisma.client.ts
 │   │   │   ├── storage/
 │   │   │   │   ├── google-drive.service.ts
 │   │   │   │   └── cloudflare-r2.service.ts
-│   │   │   └── logger/
-│   │   │       └── logger.ts
+│   │   │   ├── logger/
+│   │   │   │   └── logger.ts
+│   │   │   └── errors/
+│   │   │       └── app-error.ts
 │   │   ├── graphql/
 │   │   │   ├── schema.graphql
+│   │   │   ├── typeDefs.ts
 │   │   │   ├── resolvers/
 │   │   │   │   └── index.ts
 │   │   │   └── context.ts
@@ -62,72 +70,87 @@ hevy-clone/
 │   │   │   ├── jwt.ts
 │   │   │   ├── bcrypt.ts
 │   │   │   └── validators.ts
+│   │   ├── app.ts
 │   │   └── main.ts
 │   ├── prisma/
 │   │   ├── schema.prisma
-│   │   ├── migrations/
-│   │   └── seed.ts               # Script para importar o dataset
+│   │   ├── migrations/         # gerado via `prisma migrate dev`
+│   │   └── seed.ts             # upsert do dataset (400 exercícios)
 │   ├── scripts/
-│   │   └── download-dataset.sh   # Script para baixar o dataset
+│   │   ├── download-dataset.mjs
+│   │   ├── download-dataset.sh
+│   │   └── copy-assets.mjs     # copia schema.graphql para dist/
 │   ├── tests/
 │   │   ├── unit/
 │   │   └── integration/
-│   ├── docker-compose.yml
+│   ├── vitest.config.ts
+│   ├── Dockerfile
 │   ├── .env.example
 │   ├── package.json
 │   └── tsconfig.json
 │
-└── frontend/
-    ├── src/
-    │   ├── api/
-    │   │   ├── client.ts
-    │   │   ├── queries/
-    │   │   │   ├── auth.queries.ts
-    │   │   │   └── exercises.queries.ts
-    │   │   └── mutations/
-    │   │       └── auth.mutations.ts
-    │   ├── models/  # WatermelonDB
-    │   │   ├── User.ts
-    │   │   ├── Exercise.ts
-    │   │   └── index.ts
-    │   ├── db/
-    │   │   ├── database.ts
-    │   │   ├── schema.ts
-    │   │   └── sync.ts
-    │   ├── screens/
-    │   │   ├── Auth/
-    │   │   │   ├── LoginScreen.tsx
-    │   │   │   └── RegisterScreen.tsx
-    │   │   └── App/
-    │   │       ├── HomeScreen.tsx
-    │   │       └── ProfileScreen.tsx
-    │   ├── components/
-    │   │   └── ui/
-    │   │       ├── Button.tsx
-    │   │       ├── Input.tsx
-    │   │       ├── Card.tsx
-    │   │       └── Typography.tsx
-    │   ├── hooks/
-    │   │   └── useAuth.ts
-    │   ├── store/
-    │   │   └── authStore.ts
-    │   ├── navigation/
-    │   │   ├── AppNavigator.tsx
-    │   │   ├── AuthNavigator.tsx
-    │   │   └── types.ts
-    │   ├── utils/
-    │   │   ├── constants.ts
-    │   │   └── storage.ts
-    │   ├── types/
-    │   │   └── graphql.ts
-    │   └── App.tsx
-    ├── assets/
-    │   └── fonts/
-    ├── app.json
-    ├── tailwind.config.js
-    ├── metro.config.js
-    ├── package.json
-    └── tsconfig.json
+├── frontend/
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── client.ts
+│   │   │   ├── queries/
+│   │   │   │   ├── auth.queries.ts
+│   │   │   │   └── exercises.queries.ts
+│   │   │   └── mutations/
+│   │   │       └── auth.mutations.ts
+│   │   ├── models/            # WatermelonDB
+│   │   │   ├── User.ts
+│   │   │   ├── Exercise.ts
+│   │   │   └── index.ts
+│   │   ├── db/
+│   │   │   ├── database.ts    # LokiJSAdapter
+│   │   │   ├── schema.ts
+│   │   │   └── sync.ts
+│   │   ├── screens/
+│   │   │   ├── Auth/
+│   │   │   │   ├── LoginScreen.tsx
+│   │   │   │   └── RegisterScreen.tsx
+│   │   │   └── App/
+│   │   │       ├── HomeScreen.tsx
+│   │   │       ├── ExercisesScreen.tsx
+│   │   │       └── ProfileScreen.tsx
+│   │   ├── components/
+│   │   │   └── ui/
+│   │   │       ├── Button.tsx
+│   │   │       ├── Input.tsx
+│   │   │       ├── Card.tsx
+│   │   │       └── Typography.tsx
+│   │   ├── hooks/
+│   │   │   └── useAuth.ts
+│   │   ├── store/
+│   │   │   └── authStore.ts
+│   │   ├── navigation/
+│   │   │   ├── AppNavigator.tsx    # Tabs: Home / Exercícios / Perfil
+│   │   │   ├── AuthNavigator.tsx
+│   │   │   └── types.ts
+│   │   ├── utils/
+│   │   │   ├── constants.ts
+│   │   │   └── storage.ts
+│   │   ├── types/
+│   │   │   └── graphql.ts
+│   │   └── App.tsx
+│   ├── assets/
+│   │   └── fonts/
+│   ├── index.ts                # entrypoint (substitui expo/AppEntry.js)
+│   ├── app.json
+│   ├── babel.config.js
+│   ├── tailwind.config.js
+│   ├── metro.config.js
+│   ├── package.json
+│   └── tsconfig.json
+│
+├── docs/
+│   ├── specs/fase-1.md
+│   ├── progress/fase-1.md
+│   └── history/
+├── .github/workflows/deploy.yml
+├── docker-compose.yml           # postgres + redis + backend (na raiz)
+└── README.md
 ```
 
 ---
@@ -198,7 +221,8 @@ model ExerciseLibrary {
   // Relacionamentos
   routineExercises RoutineExercise[]
   workoutSets      WorkoutSet[]
-  
+
+  @@unique([datasetId])
   @@index([muscleGroup])
   @@index([equipment])
   @@index([category])
@@ -338,9 +362,19 @@ enum SetType {
 }
 ```
 
+> **Observação (implementação real):** `MuscleGroup` no Prisma inclui `FullBody` e `Other`
+> (o dataset usa `body_part` como `other` em alguns casos) e `ExerciseLibrary` tem
+> `@@unique([datasetId])` para permitir o `upsert` do seed.
+
 ---
 
 ## 📥 Script para Baixar o Dataset
+
+> **Adaptação (implementação real):** existe `backend/scripts/download-dataset.mjs`
+> (Node, cross-platform) além do `.sh` abaixo. As **imagens WebP não são baixadas para o
+> repositório** — as URLs apontam para o GitHub raw do dataset
+> (`https://raw.githubusercontent.com/sergei-argutin/exercise-dataset/main/images/flat/…webp`),
+> validadas durante o desenvolvimento. A pasta `data/images/` fica só com `.gitkeep`.
 
 ### `backend/scripts/download-dataset.sh`:
 ```bash
@@ -368,6 +402,11 @@ git submodule add https://github.com/sergei-argutin/exercise-dataset.git backend
 ---
 
 ## 🌱 Seed do Banco de Dados (`backend/prisma/seed.ts`)
+
+> **Implementação real:** usa `upsert` (create + update em `datasetId`), lê o dataset de
+> `src/modules/exercises/data/exercises.json` (e caminho via `DATASET_PATH`), e monta as
+> URLs de imagem a partir de `BASE_IMAGE_URL` (env). Importa os 400 exercícios de forma
+> idempotente. O `prisma.seed` no `package.json` aponta para o script compilado.
 
 ```typescript
 import { PrismaClient, MuscleGroup, EquipmentType } from '@prisma/client'
@@ -614,6 +653,8 @@ enum MuscleGroup {
   Arms
   Core
   Cardio
+  FullBody
+  Other
 }
 
 enum EquipmentType {
@@ -647,56 +688,66 @@ type Mutation {
   login(email: String!, password: String!): AuthPayload!
 }
 ```
+> ✅ Implementado exatamente assim em `backend/src/graphql/schema.graphql` (com `MuscleGroup` completo).
+```
 
 ---
 
 ## 🎨 Frontend - Configuração Base
 
-### Package.json (Frontend):
+### Package.json (Frontend) — implementado:
 ```json
 {
-  "name": "hevy-clone",
-  "version": "0.0.1",
-  "main": "node_modules/expo/AppEntry.js",
+  "name": "pointfit-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "build": "expo build",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
-    "expo": "~50.0.0",
-    "expo-status-bar": "~1.11.0",
-    "react": "18.2.0",
-    "react-native": "0.73.2",
-    "react-native-safe-area-context": "4.8.2",
-    "react-native-screens": "~3.29.0",
+    "@apollo/client": "^3.8.11",
+    "@nozbe/watermelondb": "^0.27.1",
+    "@react-navigation/bottom-tabs": "^6.5.11",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/stack": "^6.3.20",
-    "@react-navigation/bottom-tabs": "^6.5.11",
-    "nativewind": "^2.0.11",
-    "tailwindcss": "^3.3.2",
-    "@apollo/client": "^3.8.8",
+    "expo": "~50.0.0",
+    "expo-image": "~1.10.0",
+    "expo-secure-store": "~12.0.0",
+    "expo-status-bar": "~1.11.0",
     "graphql": "^16.8.1",
-    "zustand": "^4.4.7",
-    "@nozbe/watermelondb": "^0.27.1",
+    "nativewind": "^2.0.11",
+    "react": "18.2.0",
+    "react-native": "0.73.2",
     "react-native-gesture-handler": "~2.14.0",
     "react-native-reanimated": "~3.6.2",
-    "expo-secure-store": "~12.0.0",
-    "expo-image": "~1.10.0"
+    "react-native-safe-area-context": "4.8.2",
+    "react-native-screens": "~3.29.0",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@types/react": "~18.2.45",
-    "typescript": "^5.3.3",
-    "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
-    "@typescript-eslint/parser": "^6.18.1"
+    "@typescript-eslint/parser": "^6.18.1",
+    "babel-preset-expo": "~10.0.1",
+    "eslint": "^8.56.0",
+    "tailwindcss": "3.2.7",
+    "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "postcss": "8.4.31"
   }
 }
 ```
+
+> **Pins importantes:** `tailwindcss` fixado em `3.2.7` e `postcss` em `8.4.31` via
+> `overrides` (ver "Decisões técnicas" no fim). Entrypoint = `index.ts`.
 
 ### Apollo Client Config (`frontend/src/api/client.ts`):
 ```typescript
@@ -815,23 +866,22 @@ export const mySchema = appSchema({
         { name: 'is_custom', type: 'boolean' },
         { name: 'category', type: 'string', isOptional: true },
         { name: 'difficulty', type: 'string', isOptional: true },
-        { name: 'primary_muscles', type: 'string' }, // JSON string
-        { name: 'secondary_muscles', type: 'string' }, // JSON string
-        { name: 'goals', type: 'string' }, // JSON string
-        { name: 'tags', type: 'string' }, // JSON string
+        { name: 'primary_muscles', type: 'string', isOptional: true }, // JSON string
+        { name: 'secondary_muscles', type: 'string', isOptional: true }, // JSON string
+        { name: 'goals', type: 'string', isOptional: true }, // JSON string
+        { name: 'tags', type: 'string', isOptional: true }, // JSON string
         { name: 'met', type: 'number', isOptional: true },
         { name: 'is_unilateral', type: 'boolean' },
         { name: 'is_bodyweight', type: 'boolean' },
-        { name: 'instructions_en', type: 'string' }, // JSON string
-        { name: 'instructions_de', type: 'string' }, // JSON string
-        { name: 'instructions_es', type: 'string' }, // JSON string
-        { name: 'tips_en', type: 'string' }, // JSON string
-        { name: 'tips_de', type: 'string' }, // JSON string
-        { name: 'tips_es', type: 'string' }, // JSON string
+        { name: 'instructions_en', type: 'string', isOptional: true }, // JSON string
+        { name: 'instructions_de', type: 'string', isOptional: true }, // JSON string
+        { name: 'instructions_es', type: 'string', isOptional: true }, // JSON string
+        { name: 'tips_en', type: 'string', isOptional: true }, // JSON string
+        { name: 'tips_de', type: 'string', isOptional: true }, // JSON string
+        { name: 'tips_es', type: 'string', isOptional: true }, // JSON string
         { name: 'dataset_id', type: 'string', isOptional: true },
         { name: 'created_at', type: 'number' },
         { name: 'updated_at', type: 'number' },
-        { name: '_status', type: 'string' },
       ]
     }),
     // ... MAIS TABELAS SERÃO ADICIONADAS NAS FASES SEGUINTES
@@ -841,7 +891,7 @@ export const mySchema = appSchema({
 
 ---
 
-## 🔄 CI/CD - GitHub Actions (`.github/workflows/deploy.yml`):
+## 🔄 CI/CD - GitHub Actions (`.github/workflows/deploy.yml`) — implementado:
 
 ```yaml
 name: Deploy Backend
@@ -851,39 +901,61 @@ on:
     branches: [ main ]
     paths:
       - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
 
 jobs:
-  deploy:
+  ci:
+    name: CI - Test & Build
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hevy_clone
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s --health-timeout 5s --health-retries 5
     steps:
-    - uses: actions/checkout@v3
-    
+    - uses: actions/checkout@v4
     - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '20'
-        
+      uses: actions/setup-node@v4
+      with: { node-version: '20', cache: npm, cache-dependency-path: backend/package-lock.json }
     - name: Install Dependencies
-      run: |
-        cd backend
-        npm ci
-        
+      run: npm ci
+      working-directory: backend
     - name: Download Exercise Dataset
-      run: |
-        cd backend
-        npm run download-dataset
-        
+      run: npm run download-dataset
+      working-directory: backend
+    - name: Lint
+      run: npm run lint
+      working-directory: backend
     - name: Run Tests
-      run: |
-        cd backend
-        npm test
-        
+      run: npm test
+      working-directory: backend
     - name: Build
-      run: |
-        cd backend
-        npm run build
-        
+      run: npm run build
+      working-directory: backend
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with: { node-version: '20' }
+    - name: Install Dependencies
+      run: npm ci
+      working-directory: backend
     - name: Deploy to Railway
       uses: railwayup/action-railway@v1
       with:
@@ -891,9 +963,12 @@ jobs:
         service: ${{ secrets.RAILWAY_SERVICE }}
 ```
 
+> ✅ Job `ci` roda com **PostgreSQL como serviço** (permite migrar o schema/rodar o seed e testes),
+> `npm ci`, download do dataset, lint, testes e build a cada PR/push.
+
 ---
 
-## 🐳 Docker Compose (Local Development):
+## 🐳 Docker Compose (Local Development) — implementado na raiz:
 
 ```yaml
 version: '3.8'
@@ -905,30 +980,36 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: hevy_clone
-    ports:
-      - "5432:5432"
+    ports: ["5432:5432"]
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    ports: ["6379:6379"]
 
   backend:
     build: ./backend
-    ports:
-      - "4000:4000"
+    ports: ["4000:4000"]
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/hevy_clone
       REDIS_URL: redis://redis:6379
       JWT_SECRET: development-secret-key
-    depends_on:
-      - postgres
-      - redis
+      NODE_ENV: development
+      PORT: 4000
     volumes:
       - ./backend:/app
       - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
 volumes:
   postgres_data:
@@ -939,101 +1020,106 @@ volumes:
 ## 📝 Checklist de Implementação
 
 ### Semana 1 (Backend):
-- [ ] Criar projeto Node.js com TypeScript
-- [ ] Configurar Fastify + Apollo Server
-- [ ] Configurar Prisma + PostgreSQL (Docker)
-- [ ] Criar schema.prisma completo
-- [ ] Implementar autenticação (register/login)
-- [ ] **Baixar Exercise Dataset (400 exercícios)**
-- [ ] **Criar seed para importar os exercícios**
-- [ ] Configurar JWT + middleware
-- [ ] Escrever testes unitários (Vitest)
-- [ ] Configurar GitHub Actions
+- [x] Criar projeto Node.js com TypeScript
+- [x] Configurar Fastify + Apollo Server
+- [x] Configurar Prisma + PostgreSQL (Docker)
+- [x] Criar schema.prisma completo
+- [x] Implementar autenticação (register/login)
+- [x] **Baixar Exercise Dataset (400 exercícios)**
+- [x] **Criar seed para importar os exercícios**
+- [x] Configurar JWT + middleware
+- [x] Escrever testes unitários (Vitest) — 23 testes passando
+- [x] Configurar GitHub Actions
 
 ### Semana 2 (Frontend):
-- [ ] Criar projeto Expo com TypeScript
-- [ ] Configurar NativeWind (Tailwind)
-- [ ] Configurar React Navigation
-- [ ] Configurar Apollo Client
-- [ ] Implementar autenticação (login/register)
-- [ ] Configurar Zustand + SecureStore
-- [ ] Configurar WatermelonDB (schema base)
-- [ ] Criar componentes UI (Button, Input, Card)
-- [ ] Criar telas básicas (Home, Profile)
-- [ ] **Testar exibição de exercícios com imagens**
+- [x] Criar projeto Expo com TypeScript
+- [x] Configurar NativeWind (Tailwind)
+- [x] Configurar React Navigation
+- [x] Configurar Apollo Client
+- [x] Implementar autenticação (login/register)
+- [x] Configurar Zustand + SecureStore
+- [x] Configurar WatermelonDB (schema base)
+- [x] Criar componentes UI (Button, Input, Card)
+- [x] Criar telas básicas (Home, Profile, Exercícios)
+- [x] **Testar exibição de exercícios com imagens** — bundle Android validado (`expo export`)
 
 ### Semana 3 (Integração):
-- [ ] Integrar frontend com backend
-- [ ] Testar fluxo de autenticação completo
-- [ ] **Verificar importação dos 400 exercícios**
-- [ ] **Testar exibição de imagens WebP**
-- [ ] Deploy backend (Railway/Fly.io)
-- [ ] Configurar variáveis de ambiente
-- [ ] Testar em dispositivo real (iOS + Android)
-- [ ] **Adicionar atribuição: "Exercise data by RepDB (repdb.co)"**
-- [ ] Documentar API e setup
+- [x] Integrar frontend com backend
+- [x] Testar fluxo de autenticação completo
+- [x] **Verificar importação dos 400 exercícios** — dataset validado (JSON + URLs de imagem)
+- [x] **Testar exibição de imagens WebP** — URLs verificadas (HTTP 200, `image/webp`)
+- [ ] Deploy backend (Railway/Fly.io) — **pendente: precisa de token Railway**
+- [x] Configurar variáveis de ambiente
+- [ ] Testar em dispositivo real (iOS + Android) — **pendente: depende de backend + Postgres**
+- [x] **Adicionar atribuição: "Exercise data by RepDB (repdb.co)"**
+- [x] Documentar API e setup
 
 ---
 
 ## 🔧 Variáveis de Ambiente
 
-### Backend (`.env`):
+### Backend (`.env`) — `.env.example` no repo (atualizado):
 ```env
-# Database
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/hevy_clone
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# JWT
 JWT_SECRET=your-super-secret-key-at-least-32-characters
+JWT_EXPIRES_IN=7d
+PORT=4000
+LOG_LEVEL=info
+CORS_ORIGIN=*
+BASE_IMAGE_URL=https://raw.githubusercontent.com/sergei-argutin/exercise-dataset/main/images/flat/
+DATASET_URL=https://exercise-dataset.com/exercises.json
 
-# Google Drive (para vídeos futuros)
+# Fases futuras
+REDIS_URL=redis://localhost:6379
 GOOGLE_DRIVE_API_KEY=your-api-key
-
-# Cloudflare R2 (para fotos de usuário)
 R2_ACCOUNT_ID=your-account-id
 R2_ACCESS_KEY_ID=your-access-key
 R2_SECRET_ACCESS_KEY=your-secret-key
 R2_BUCKET_NAME=your-bucket
-
-# Environment
-NODE_ENV=development
-PORT=4000
-
-# Dataset (URL do JSON)
-DATASET_URL=https://exercise-dataset.com/exercises.json
 ```
 
 ### Frontend (`.env`):
 ```env
 EXPO_PUBLIC_API_URL=http://localhost:4000/graphql
 EXPO_PUBLIC_DATASET_BASE_URL=https://raw.githubusercontent.com/sergei-argutin/exercise-dataset/main/images/flat/
+EXPO_PUBLIC_APP_NAME=PointFit
 ```
 
 ---
 
 ## 🚀 Comandos para Iniciar
 
+Necessita de PostgreSQL. Sem Docker local, você pode subir via `docker compose`
+(ou usar um Postgres remoto e apontar `DATABASE_URL`).
+
 ```bash
 # Backend
 cd backend
 npm install
-# Baixar o dataset (JSON + imagens)
-npm run download-dataset
+cp .env.example .env          # ajuste DATABASE_URL, JWT_SECRET, BASE_IMAGE_URL
+npm run download-dataset      # baixa o exercises.json (400 exercícios)
 npx prisma generate
 npx prisma migrate dev --name init
-npx prisma db seed
-npm run dev
+npx prisma db seed           # upsert dos 400 exercícios
+npm run dev                  # http://localhost:4000/graphql
 
-# Frontend
+# Frontend (exige backend no ar para login/sync)
 cd frontend
 npm install
-npx expo start
+cp .env.example .env
+npx expo start               # Expo Go / emulador
 
-# Docker (opcional)
-docker-compose up -d
+# Validações
+npm run typecheck            # tsc frontend limpo
+npx expo export --platform android   # valida o bundle Hermes
+npm run lint && npm test && npm run build   # backend
+
+# Docker (subir Postgres + Redis + backend juntos)
+docker-compose up -d         # na raiz do repo
 ```
+
+> **No dev Windows atual não há Docker/Postgres local** — por isso migrate/seed reais
+> rodam apenas via `docker compose` ou na CI (que provisiona o Postgres como serviço).
 
 ---
 
@@ -1057,17 +1143,47 @@ Conforme a licença do Exercise Dataset, é necessário incluir atribuição no 
 
 1. ✅ Backend roda localmente sem erros
 2. ✅ API GraphQL responde no `http://localhost:4000/graphql`
-3. ✅ É possível registrar um novo usuário
+3. ✅ É possível registrar um novo usuário (integração GraphQL + testes)
 4. ✅ É possível fazer login com credenciais válidas
 5. ✅ Token JWT é gerado e validado
-6. ✅ **Biblioteca tem 400+ exercícios do Exercise Dataset**
-7. ✅ **Imagens WebP dos exercícios são exibidas corretamente**
-8. ✅ App mobile inicia e mostra tela de login/registro
+6. ✅ **Biblioteca tem 400+ exercícios do Exercise Dataset** (seed upsert idempotente)
+7. ✅ **Imagens WebP dos exercícios são exibidas corretamente** (URLs verificadas, expo-image no frontend)
+8. ✅ App mobile inicia e mostra tela de login/registro (bundle Hermes validado)
 9. ✅ Após login, navega para tela Home
 10. ✅ Dados do usuário persistem no SecureStore
-11. ✅ Tests passam (unitários)
-12. ✅ **Atribuição ao RepDB está visível no app**
+11. ✅ Tests passam — 23/23 no backend (unit + integração)
+12. ✅ **Atribuição ao RepDB está visível no app** (tela Perfil/Sobre)
 13. ✅ Documentação básica do README
+
+> **Ressalva:** critérios "end-to-end" (registro/login reais em Postgres e teste em
+> dispositivo) dependem de um banco/backend no ar — executáveis via `docker compose`
+> ou no CI.
+
+---
+
+## 🧭 Decisões de Implementação (adaptações em relação à spec original)
+
+- **Tailwind fixado em `3.2.7`**: NativeWind 2.0.11 processa CSS de forma **síncrona**
+  (`extractStyles` → `.process().css`). Tailwind ≥ 3.3 registra o plugin como `async`,
+  o que estoura `Use process(css).then(cb)`. Fix também trava `postcss` em `8.4.31`
+  via `overrides`.
+- **Imagens servidas remotamente**: em vez de baixar os WebP para o repositório, as URLs
+  apontam para o GitHub raw do dataset. Reduz o tamanho do repo (2.035 arquivos, ~90 MB).
+- **WatermelonDB com LokiJSAdapter**: SQLiteAdapter exige módulo nativo indisponível no
+  Expo Go; LokiJS é 100% JS. Coluna `_status` é gerenciada pela lib (não declarada no schema).
+- **Apollo `formatError`**: `instanceof AppError/ZodError` falha por cópias duplicadas
+  do módulo (CJS/ESM) — resolvido com *duck typing* (`isAppError`/`isZodError` +
+  `unwrapOriginalError` recursivo).
+- **Entry frontend = `index.ts`** e `plugins` do app.json sem `expo-secure-store`
+  (versão sem config plugin válida; SecureStore funciona no Expo Go sem ele).
+- **Seed idempotente**: `upsert` por `datasetId` (`@@unique([datasetId])`) em vez de
+  `create` puro — permite re-executar com segurança.
+- **Enum `MuscleGroup`** ganhou `FullBody` e `Other` (o dataset usa `Other` em alguns
+  registros).
+- **Testes**: Vitest (mocks via `vi.hoisted`); 23 testes em 5 arquivos (unit + integração).
+
+> Detalhes completos da execução, verificação e pendências em
+> [docs/progress/fase-1.md](./../progress/fase-1.md).
 
 ---
 
@@ -1077,4 +1193,4 @@ Conforme a licença do Exercise Dataset, é necessário incluir atribuição no 
 
 ## Histórico de Conversa com a IA
 
-O histórico de conversa com a IA se encontra em: C:\Users\user\Documents\Projetos Pessoais\Nova pasta\PointFit\histórico-de-conversa-ia-md
+O histórico de conversa com a IA se encontra em: `C:\Users\user\Documents\Projetos Pessoais\Nova pasta\PointFit\docs\history\histórico-de-conversa-ia-md`
