@@ -20,7 +20,7 @@
 6. ✅ Navegação básica (Auth + App stacks)
 7. ✅ Configuração do WatermelonDB (offline)
 8. ✅ CI/CD com GitHub Actions
-9. ✅ Deploy do backend (Railway ou Fly.io)
+9. ✅ Backend pronto para deploy (hospedagem pública pendente; banco no Supabase)
 
 ---
 
@@ -148,7 +148,7 @@ PointFit/
 │   ├── specs/fase-1.md
 │   ├── progress/fase-1.md
 │   └── history/
-├── .github/workflows/deploy.yml
+├── .github/workflows/ci.yml
 ├── docker-compose.yml           # postgres + redis + backend (na raiz)
 └── README.md
 ```
@@ -891,25 +891,25 @@ export const mySchema = appSchema({
 
 ---
 
-## 🔄 CI/CD - GitHub Actions (`.github/workflows/deploy.yml`) — implementado:
+## 🔄 CI - GitHub Actions (`.github/workflows/ci.yml`) — implementado:
 
 ```yaml
-name: Deploy Backend
+name: CI - Backend
 
 on:
   push:
     branches: [ main ]
     paths:
       - 'backend/**'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
     paths:
       - 'backend/**'
 
 jobs:
-  ci:
-    name: CI - Test & Build
+  backend-and-build:
+    name: Test & Build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -931,6 +931,16 @@ jobs:
     - name: Install Dependencies
       run: npm ci
       working-directory: backend
+    - name: Apply Migrations
+      run: npm run prisma:deploy
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hevy_clone
+    - name: Seed Exercise Dataset
+      run: npm run seed
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hevy_clone
     - name: Download Exercise Dataset
       run: npm run download-dataset
       working-directory: backend
@@ -943,28 +953,14 @@ jobs:
     - name: Build
       run: npm run build
       working-directory: backend
-  deploy:
-    name: Deploy to Railway
-    runs-on: ubuntu-latest
-    needs: ci
-    if: github.ref == 'refs/heads/main'
-    steps:
-    - uses: actions/checkout@v4
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with: { node-version: '20' }
-    - name: Install Dependencies
-      run: npm ci
-      working-directory: backend
-    - name: Deploy to Railway
-      uses: railwayup/action-railway@v1
-      with:
-        railway_token: ${{ secrets.RAILWAY_TOKEN }}
-        service: ${{ secrets.RAILWAY_SERVICE }}
 ```
 
-> ✅ Job `ci` roda com **PostgreSQL como serviço** (permite migrar o schema/rodar o seed e testes),
-> `npm ci`, download do dataset, lint, testes e build a cada PR/push.
+> ✅ Roda com **PostgreSQL como serviço**: aplica `prisma migrate deploy`, roda o seed
+> (400 exercícios), download do dataset, lint, testes e build a cada PR/push.
+>
+> **Banco de desenvolvimento:** [Supabase](https://supabase.com) (Postgres free gerenciado) —
+> `DATABASE_URL` local no `.env` aponta para o Supabase; na CI usamos o Postgres efêmero do runner.
+> `DATABASE_URL` local aponta para o projeto Supabase; a CI usa o Postgres efêmero do runner.
 
 ---
 
@@ -1048,7 +1044,7 @@ volumes:
 - [x] Testar fluxo de autenticação completo
 - [x] **Verificar importação dos 400 exercícios** — dataset validado (JSON + URLs de imagem)
 - [x] **Testar exibição de imagens WebP** — URLs verificadas (HTTP 200, `image/webp`)
-- [ ] Deploy backend (Railway/Fly.io) — **pendente: precisa de token Railway**
+- [ ] Deploy backend (hospedagem pública) — **pendente: escolher plataforma (ex.: Render)**
 - [x] Configurar variáveis de ambiente
 - [ ] Testar em dispositivo real (iOS + Android) — **pendente: depende de backend + Postgres**
 - [x] **Adicionar atribuição: "Exercise data by RepDB (repdb.co)"**

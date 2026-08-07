@@ -56,5 +56,6 @@ O uso é permitido com atribuição; o crédito aparece dentro do app (link para
 
 ## CI/CD
 
-O GitHub Actions em `.github/workflows/deploy.yml` roda lint/typecheck/test/build
-no backend e faz deploy da imagem Docker no GHCR (containerizado).
+O GitHub Actions em `.github/workflows/ci.yml` roda lint, testes, build, `prisma migrate
+deploy` e seed de exercícios no backend (com Postgres provisionado como serviço), a cada
+push/PR. O banco de desenvolvimento/uso é o **Supabase** (Postgres free).

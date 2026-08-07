@@ -60,7 +60,8 @@ tests/                # unit + integração (Vitest)
 ## Docker / CI
 
 - `Dockerfile` + `docker-compose.yml` (postgres + redis opcional) na raiz do repositório.
-- `.github/workflows/deploy.yml`: CI (lint, typecheck, test, build) e deploy da imagem no GHCR.
+- `.github/workflows/ci.yml`: CI do backend (lint, typecheck, teste, build) com Postgres
+  de serviço e execução de `prisma migrate deploy` + `seed` — + banco de dev no Supabase.
 
 ## Variáveis de ambiente
 

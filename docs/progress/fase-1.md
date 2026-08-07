@@ -38,7 +38,9 @@ bundling), com exceção de operações que exigem PostgreSQL/Docker reais (migr
 - `typecheck` limpo; `expo export --platform android` gerou bundle Hermes 4,23 MB sem erros.
 
 ### Infra / Docs
-- `.github/workflows/deploy.yml` (CI com Postgres como serviço + deploy Railway).
+- `.github/workflows/ci.yml` (lint, testes, build, migrate deploy + seed com Postgres
+  do runner).
+- Banco de uso no **Supabase** (Postgres free) — `DATABASE_URL` no `.env` local.
 - `docker-compose.yml` (postgres + redis + backend, com healthcheck).
 - READMEs (raiz + backend), atribuição obrigatória RepDB no app.
 - Estrutura de docs: `docs/specs/`, `docs/progress/`, `docs/history/`.
@@ -77,11 +79,11 @@ bundling), com exceção de operações que exigem PostgreSQL/Docker reais (migr
 
 ## ⏳ Pendências
 
-- [ ] `prisma migrate dev` + seed em **banco real** (sem Postgres/Docker local → via
-      `docker compose up -d` ou na CI).
+- [x] `prisma migrate deploy` + seed em **banco real**: executado na CI (Postgres de
+      serviço — 400 exercícios importados) e agora no **Supabase** localmente.
 - [ ] Teste de login/registro ponta a ponta com backend + Postgres no ar.
 - [ ] Teste em dispositivo real (Expo Go / emulador).
-- [ ] Deploy no Railway (requer `RAILWAY_TOKEN`/`RAILWAY_SERVICE` secrets).
+- [ ] Deploy do backend em hospedagem pública (ex.: Render) — pendente.
 - [ ] Frontend: `npm audit` (dependências com avisos — não tratado nesta fase).
 - [ ] `expo-doctor` / provisão de native modules se migrar p/ dev build.
 - [ ] Decisão sobre versionar `docs/history/` (histórico de IA).
