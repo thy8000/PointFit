@@ -42,6 +42,25 @@ O frontend funciona offline: exercícios sincronizados ficam no WatermelonDB e a
 telas de Home/Exercícios leem do banco local. Requer um backend acessível para
 login/registro e primeira sincronização.
 
+## Deploy (backend — Render)
+
+O backend é empacotado em Docker e deployado na [Render](https://render.com) via
+Blueprint (`render.yaml` na raiz). Para colocar no ar:
+
+1. No painel da Render: **New + → Blueprint**, selecione o repositório
+   `thy8000/PointFit` (branch `main`) e confirme.
+2. Configure as variáveis de ambiente do serviço `pointfit-backend`:
+   - `DATABASE_URL` — connection string do Supabase (com `?sslmode=require`)
+   - `JWT_SECRET` — segredo forte de produção
+3. O Dockerfile roda `prisma migrate deploy` no boot — o banco Supabase já tem o
+   seed dos 400 exercícios.
+4. **Deploy automático:** após a primeira criação, cole o *deploy hook URL* do
+   serviço em `Settings → Deploy Hook`, e adicione-o como secret do GitHub
+   `RENDER_DEPLOY_HOOK_URL` — o workflow `.github/workflows/deploy.yml` dispara o
+   deploy a cada push em `main` que altere o backend.
+
+Health check: `GET /health`. API GraphQL: `GET/POST /graphql`.
+
 ## Stack
 
 - Backend: Node.js, Fastify, Apollo Server, GraphQL, Prisma, PostgreSQL, JWT, Vitest, Docker.

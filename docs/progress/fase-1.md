@@ -81,9 +81,9 @@ bundling), com exceção de operações que exigem PostgreSQL/Docker reais (migr
 
 - [x] `prisma migrate deploy` + seed em **banco real**: executado na CI (Postgres de
       serviço — 400 exercícios importados) e agora no **Supabase** localmente.
-- [ ] Teste de login/registro ponta a ponta com backend + Postgres no ar.
-- [ ] Teste em dispositivo real (Expo Go / emulador).
-- [ ] Deploy do backend em hospedagem pública (ex.: Render) — pendente.
+- [x] Teste de login/registro ponta a ponta com backend + Postgres no ar.
+- [x] Teste em dispositivo real (Expo Go / emulador).
+- [ ] Deploy do backend em hospedagem pública (Render) — config pronto (`render.yaml` + workflow), aguardando criação do serviço no painel.
 - [ ] Frontend: `npm audit` (dependências com avisos — não tratado nesta fase).
 - [ ] `expo-doctor` / provisão de native modules se migrar p/ dev build.
 - [ ] Decisão sobre versionar `docs/history/` (histórico de IA).

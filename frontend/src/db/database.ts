@@ -9,6 +9,7 @@ const adapter = new LokiJSAdapter({
   dbName: 'pointfit',
   schema: mySchema,
   useWebWorker: false,
+  useIncrementalIndexedDB: true,
 })
 
 export const database = new Database({

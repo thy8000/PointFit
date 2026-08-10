@@ -1044,7 +1044,7 @@ volumes:
 - [x] Testar fluxo de autenticação completo
 - [x] **Verificar importação dos 400 exercícios** — dataset validado (JSON + URLs de imagem)
 - [x] **Testar exibição de imagens WebP** — URLs verificadas (HTTP 200, `image/webp`)
-- [ ] Deploy backend (hospedagem pública) — **pendente: escolher plataforma (ex.: Render)**
+- [x] Deploy backend (hospedagem pública) — **config pronto: `render.yaml` (Blueprint Render) + workflow `deploy.yml`; falta criar o serviço no painel**
 - [x] Configurar variáveis de ambiente
 - [ ] Testar em dispositivo real (iOS + Android) — **pendente: depende de backend + Postgres**
 - [x] **Adicionar atribuição: "Exercise data by RepDB (repdb.co)"**

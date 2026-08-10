@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: pointfit-backend
+    runtime: docker
+    repo: https://github.com/thy8000/PointFit
+    plan: free
+    branch: main
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DATASET_URL
+        value: https://exercise-dataset.com/exercises.json
+      - key: DATASET_IMAGE_BASE_URL
+        value: https://raw.githubusercontent.com/sergei-argutin/exercise-dataset/main/
