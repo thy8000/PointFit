@@ -14,8 +14,6 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "4000"
       - key: DATASET_URL
         value: https://exercise-dataset.com/exercises.json
       - key: DATASET_IMAGE_BASE_URL
