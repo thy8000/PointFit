@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  name          String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  exercises        ExerciseLibrary[]
+  workoutRoutines  WorkoutRoutine[]
+  workoutSessions  WorkoutSession[]
+  bodyMeasurements BodyMeasurement[]
+  progressPhotos   ProgressPhoto[]
+}
+
+model ExerciseLibrary {
+  id               String        @id @default(uuid())
+  name             String
+  description      String?
+  muscleGroup      MuscleGroup
+  equipment        EquipmentType
+  videoUrl         String?
+  thumbnailUrl     String?
+  imageStart       String?
+  imagePeak        String?
+  imageMain        String?
+  isCustom         Boolean       @default(false)
+  createdBy        String?
+  createdByUser    User?         @relation(fields: [createdBy], references: [id])
+
+  category         String?
+  forceType        String?
+  mechanic         String?
+  difficulty       String?
+  primaryMuscles   String[]
+  secondaryMuscles String[]
+  goals            String[]
+  tags             String[]
+  met              Float?
+  isUnilateral     Boolean       @default(false)
+  isBodyweight     Boolean       @default(false)
+  instructionsEn   String[]
+  instructionsDe   String[]
+  instructionsEs   String[]
+  tipsEn           String[]
+  tipsDe           String[]
+  tipsEs           String[]
+  datasetId        String?
+
+  routineExercises RoutineExercise[]
+  workoutSets      WorkoutSet[]
+
+  @@unique([datasetId])
+  @@index([muscleGroup])
+  @@index([equipment])
+  @@index([category])
+  @@index([difficulty])
+}
+
+model WorkoutRoutine {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  routineExercises RoutineExercise[]
+  workoutSessions  WorkoutSession[]
+
+  @@index([userId])
+}
+
+model RoutineExercise {
+  id              String            @id @default(uuid())
+  routineId       String
+  routine         WorkoutRoutine    @relation(fields: [routineId], references: [id])
+  exerciseId      String
+  exercise        ExerciseLibrary   @relation(fields: [exerciseId], references: [id])
+  order           Int
+  defaultSets     Int?
+  defaultReps     Int?
+  defaultWeight   Float?
+  restSeconds     Int?
+  supersetGroupId String?
+
+  @@index([routineId])
+  @@index([exerciseId])
+}
+
+model WorkoutSession {
+  id          String         @id @default(uuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id])
+  routineId   String?
+  routine     WorkoutRoutine? @relation(fields: [routineId], references: [id])
+  startedAt   DateTime       @default(now())
+  endedAt     DateTime?
+  totalVolume Float?
+  totalSets   Int?
+  notes       String?
+
+  workoutSets WorkoutSet[]
+
+  @@index([userId])
+  @@index([startedAt])
+}
+
+model WorkoutSet {
+  id              String            @id @default(uuid())
+  sessionId       String
+  session         WorkoutSession    @relation(fields: [sessionId], references: [id])
+  exerciseId      String
+  exercise        ExerciseLibrary   @relation(fields: [exerciseId], references: [id])
+  setType         SetType
+  weightKg        Float
+  reps            Int
+  isCompleted     Boolean           @default(false)
+  order           Int
+  supersetGroupId String?
+  dropWeight      Float?
+  dropReps        Int?
+  createdAt       DateTime          @default(now())
+
+  @@index([sessionId])
+  @@index([exerciseId])
+}
+
+model BodyMeasurement {
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  weightKg          Float?
+  bodyFatPercentage Float?
+  neckCm            Float?
+  shoulderCm        Float?
+  chestCm           Float?
+  bicepCm           Float?
+  forearmCm         Float?
+  waistCm           Float?
+  hipCm             Float?
+  thighCm           Float?
+  calfCm            Float?
+  measuredAt        DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ProgressPhoto {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  photoUrl  String
+  caption   String?
+  takenAt   DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+enum MuscleGroup {
+  Chest
+  Back
+  Legs
+  Shoulders
+  Arms
+  Core
+  Cardio
+  FullBody
+  Other
+}
+
+enum EquipmentType {
+  Barbell
+  Dumbbell
+  Machine
+  Bodyweight
+  Cable
+  Kettlebell
+  Band
+  Other
+}
+
+enum SetType {
+  Warmup
+  Normal
+  DropSet
+  Failure
+  Superset
+}

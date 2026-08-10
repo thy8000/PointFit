@@ -1,0 +1,75 @@
+name: CI - Backend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  backend:
+    name: Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hevy_clone
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: npm
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install Dependencies
+      run: npm ci
+      working-directory: backend
+
+    - name: Apply Migrations
+      run: npm run prisma:deploy
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hevy_clone
+
+    - name: Seed Exercise Dataset
+      run: npm run seed
+      working-directory: backend
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/hevy_clone
+
+    - name: Download Exercise Dataset
+      run: npm run download-dataset
+      working-directory: backend
+
+    - name: Lint
+      run: npm run lint
+      working-directory: backend
+
+    - name: Run Tests
+      run: npm test
+      working-directory: backend
+
+    - name: Build
+      run: npm run build
+      working-directory: backend

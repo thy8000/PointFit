@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+*.log
+.env
+
+# Build
+dist/
+backend/dist/
+coverage/
+
+# Expo
+.expo/
+web-build/
+frontend/.expo/
+
+# WatermelonDB / native
+frontend/android/
+frontend/ios/
+frontend/*.jks
+frontend/*.p8
+frontend/*.p12
+frontend/*.key
+frontend/*.mobileprovision
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local
+.env.*.local

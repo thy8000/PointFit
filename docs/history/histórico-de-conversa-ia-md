@@ -1,0 +1,326 @@
+# 🗒️ HISTÓRICO DA CONVERSA - APP DE TREINO (HEVY CLONE)
+
+## 📅 Data: 2026-08-07
+
+---
+
+## 🎯 OBJETIVO DO PROJETO
+
+Criar um aplicativo mobile de treino (semelhante ao Hevy) com todas as funcionalidades descritas no arquivo `funcionalidades-hevy.md`, incluindo:
+- Registro e planejamento de treinos
+- Biblioteca de exercícios com vídeos
+- Análise de progresso e estatísticas
+- Medidas corporais e fotos de progresso
+- Offline-first
+- **Versão totalmente gratuita** (sem plano Pro)
+
+---
+
+## 💬 INTERAÇÕES E DECISÕES
+
+### 1️⃣ Primeira Interação - Arquitetura Inicial
+
+**Pergunta do Usuário:**
+Solicitou que eu, como Arquiteto de Software Sênior, ajudasse a planejar a criação do aplicativo, definindo stack, framework, banco de dados, infraestrutura e arquitetura de arquivos.
+
+**Decisões Tomadas:**
+
+| Camada | Tecnologia Escolhida |
+|--------|---------------------|
+| **Mobile** | React Native (Expo) + TypeScript |
+| **Web (Desktop)** | React Native Web (compartilhamento de código) |
+| **Backend** | Node.js + Fastify + TypeScript |
+| **API** | GraphQL (Apollo Server) |
+| **Banco de Dados** | PostgreSQL |
+| **Cache** | Redis |
+| **Offline** | WatermelonDB |
+| **Autenticação** | JWT custom |
+| **Pagamentos** | Removido (app totalmente gratuito) |
+| **Storage** | S3/Cloudflare R2 |
+| **Infra** | AWS ou Google Cloud Run |
+
+**Arquitetura Proposta:**
+- Modular Monolith (para começar)
+- Estrutura Domain-Driven
+- Offline-first com WatermelonDB
+- Sincronização com estratégia de timestamp (Last Write Wins)
+
+---
+
+### 2️⃣ Segunda Interação - Remoção do Plano Pro
+
+**Mudança de Escopo:**
+O usuário informou que **não haverá versão premium** - todas as funcionalidades serão gratuitas.
+
+**Ajustes Realizados:**
+- Removida toda a camada de assinaturas
+- Removido RevenueCat/Stripe
+- Simplificada a arquitetura (menos serviços)
+- Redução de custos de infraestrutura
+
+**Novo Modelo de Dados:**
+Removida a tabela `Subscription` e toda lógica de features bloqueadas.
+
+---
+
+### 3️⃣ Terceira Interação - Solução Gratuita para Mídia
+
+**Dúvida do Usuário:**
+"Tem alguma solução gratuita para os vídeos e imagens? Não quero pagar nada por enquanto."
+
+**Soluções Propostas:**
+
+| Tipo de Mídia | Solução Gratuita | Benefícios |
+|---------------|------------------|------------|
+| **Vídeos da biblioteca** | Google Drive + GDrive Media Hosting | 15GB grátis, sem limite de banda |
+| **Thumbnails** | Google Drive (mesmo esquema) | URLs públicas permanentes |
+| **Fotos de progresso** | Cloudflare R2 + Worker | 10GB grátis, zero egress fees |
+
+**Estratégia Final:**
+```
+Vídeos da biblioteca → Google Drive (estático)
+Fotos dos usuários → Cloudflare R2 (dinâmico)
+```
+
+---
+
+### 4️⃣ Quarta Interação - Fase 1 (Spec Técnica)
+
+**Solicitação do Usuário:**
+Criar uma spec técnica detalhada da Fase 1 (FUNDAÇÃO) para a IA começar a construir o app.
+
+**Entregáveis da Spec:**
+1. Backend Node.js + Fastify + TypeScript
+2. PostgreSQL com Prisma (schema completo)
+3. Autenticação JWT
+4. Seed com 50+ exercícios (biblioteca manual)
+5. Frontend React Native (Expo) com estrutura de pastas
+6. Navegação básica
+7. WatermelonDB (offline)
+8. CI/CD (GitHub Actions)
+9. Deploy (Railway/Fly.io)
+
+**Arquivos Criados:**
+- `prisma/schema.prisma` (modelo completo de dados)
+- `backend/src/modules/exercises/data/exercise-library.ts` (seed manual)
+- `backend/prisma/seed.ts` (script de seed)
+- `frontend/src/api/client.ts` (Apollo Client config)
+- `frontend/src/store/authStore.ts` (Zustand store)
+- `frontend/src/db/schema.ts` (WatermelonDB schema)
+- `.github/workflows/deploy.yml` (CI/CD)
+- `docker-compose.yml` (ambiente local)
+
+---
+
+### 5️⃣ Quinta Interação - API de Exercícios
+
+**Dúvida do Usuário:**
+"Tem alguma API que lista exercícios de treino + Imagens?"
+
+**Opções Apresentadas:**
+
+| API | Descrição | Plano Gratuito |
+|-----|-----------|----------------|
+| **Wger Workout Manager** | API open-source com exercícios e imagens | Completamente gratuita |
+| **Exercise Dataset (GitHub)** | 400 exercícios com imagens WebP | Gratuito (com atribuição) |
+| **WorkoutX** | 1300+ exercícios com GIFs | 500 req/mês grátis |
+
+**Comparativo:**
+- Wger: API externa, gratuita, mas com dependência de serviço
+- Exercise Dataset: Download local, 400 exercícios, imagens inclusas, licença comercial com atribuição
+- WorkoutX: API moderna, GIFs animados, free tier limitado
+
+---
+
+### 6️⃣ Sexta Interação - Escolha do Dataset
+
+**Decisão do Usuário:**
+"Vou usar o Exercise Dataset no lugar da biblioteca manual."
+
+**Link do Dataset Escolhido:**
+`https://github.com/sergei-argutin/exercise-dataset`
+
+**Características do Dataset:**
+- 400 exercícios em JSON
+- 512px WebP images (start/peak poses)
+- Múltiplos idiomas (EN, DE, ES)
+- MET values, músculos alvo, equipamentos
+- Licença: Uso comercial com atribuição
+- "Exercise data by RepDB (repdb.co)"
+
+**Atualizações na Spec:**
+1. Substituída a biblioteca manual de 50 exercícios pelo dataset de 400
+2. Adicionado script `download-dataset.sh` para baixar JSON + imagens
+3. Atualizado `schema.prisma` com campos adicionais do dataset
+4. Criado `seed.ts` adaptado para importar os 400 exercícios
+5. Adicionada cláusula de atribuição obrigatória
+6. Atualizada checklist com validação das imagens WebP
+
+---
+
+## 📂 ARQUIVOS GERADOS
+
+### Estrutura Completa do Projeto:
+
+```
+hevy-clone/
+├── backend/
+│   ├── src/
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   ├── auth.resolver.ts
+│   │   │   │   └── dto/
+│   │   │   ├── users/
+│   │   │   │   ├── users.service.ts
+│   │   │   │   └── users.resolver.ts
+│   │   │   └── exercises/
+│   │   │       ├── exercises.service.ts
+│   │   │       ├── exercises.resolver.ts
+│   │   │       └── data/
+│   │   │           ├── exercises.json  # Dataset baixado
+│   │   │           └── images/         # Imagens WebP
+│   │   ├── graphql/
+│   │   │   ├── schema.graphql
+│   │   │   └── resolvers/
+│   │   ├── middlewares/
+│   │   │   ├── auth.middleware.ts
+│   │   │   └── error-handler.ts
+│   │   ├── utils/
+│   │   │   ├── jwt.ts
+│   │   │   └── bcrypt.ts
+│   │   └── main.ts
+│   ├── prisma/
+│   │   ├── schema.prisma
+│   │   ├── migrations/
+│   │   └── seed.ts               # Importa o dataset
+│   ├── scripts/
+│   │   └── download-dataset.sh   # Baixa JSON + imagens
+│   ├── tests/
+│   ├── docker-compose.yml
+│   └── package.json
+│
+└── frontend/
+    ├── src/
+    │   ├── api/
+    │   ├── models/      # WatermelonDB
+    │   ├── db/
+    │   ├── screens/
+    │   ├── components/
+    │   ├── hooks/
+    │   ├── store/
+    │   ├── navigation/
+    │   └── App.tsx
+    ├── app.json
+    ├── tailwind.config.js
+    └── package.json
+```
+
+---
+
+## 🔧 VARIÁVEIS DE AMBIENTE
+
+### Backend (`.env`):
+```env
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/hevy_clone
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=your-super-secret-key
+DATASET_URL=https://exercise-dataset.com/exercises.json
+```
+
+### Frontend (`.env`):
+```env
+EXPO_PUBLIC_API_URL=http://localhost:4000/graphql
+EXPO_PUBLIC_DATASET_BASE_URL=https://raw.githubusercontent.com/sergei-argutin/exercise-dataset/main/images/flat/
+```
+
+---
+
+## 📊 PRÓXIMAS FASES (PLANEJADAS)
+
+### Fase 2 - Core do Treino (3-4 semanas)
+- CRUD de rotinas de treino
+- Tela de treino ativo (registrar séries)
+- Timer de descanso com notificação local
+- Tipos de séries (Warmup, Normal, DropSet, Failure, Superset)
+- Cálculo de 1RM em tempo real
+- Finalizar sessão e salvar histórico
+
+### Fase 3 - Offline & Sincronização (2-3 semanas)
+- Configurar WatermelonDB (schema local completo)
+- Sincronização offline-first (pull/push)
+- Fila de mutações pendentes
+- Resolução de conflitos (timestamp)
+
+### Fase 4 - Biblioteca e Mídia (2 semanas)
+- Tela de biblioteca com filtros (grupo muscular + equipamento)
+- Player de vídeos (react-native-video)
+- Upload de fotos de progresso (Cloudflare R2)
+- Registro de medidas corporais
+
+### Fase 5 - Gráficos e Estatísticas (3 semanas)
+- Backend: endpoints de analytics (volume, 1RM, por grupo muscular)
+- Cache no Redis (TTL 1 hora)
+- Frontend: gráficos com Victory Native
+- Calendário de treinos
+- Estatísticas avançadas (volume semanal, distribuição)
+
+### Fase 6 - Polimento & Deploy (2 semanas)
+- Testes (unitários + e2e)
+- Performance otimizações
+- Deploy backend (Railway ou Fly.io)
+- Deploy app (Expo EAS)
+- Landing page simples
+
+---
+
+## ✅ DECISÕES FINAIS
+
+| Decisão | Escolha | Motivo |
+|---------|---------|--------|
+| **Cross-platform** | React Native (Expo) | Custo-benefício, comunidade grande |
+| **API** | GraphQL | Flexibilidade para dados aninhados |
+| **Backend** | Node.js (Fastify) | Velocidade, TS, ecossistema maduro |
+| **DB** | PostgreSQL | Relacional, ideal para histórico de treinos |
+| **ORM** | Prisma | Type-safe, migrations fáceis |
+| **Offline** | WatermelonDB | Leve, reativo, sincronização nativa |
+| **Cache** | Redis | Gráficos e sessões |
+| **Storage (vídeos)** | Google Drive | 15GB grátis, sem limite de banda |
+| **Storage (fotos)** | Cloudflare R2 | 10GB grátis, zero egress fees |
+| **Auth** | JWT custom | Simples, sem dependências externas |
+| **Gráficos** | Victory Native | Performance em RN, bonito |
+| **Dataset** | RepDB (GitHub) | 400 exercícios + imagens, grátis com atribuição |
+| **Modelo de negócio** | 100% gratuito | Sem plano Pro |
+
+---
+
+## 📜 ATRIBUIÇÃO OBRIGATÓRIA
+
+**Texto a ser incluído no app:**
+```
+Exercise data by RepDB (repdb.co)
+```
+
+---
+
+## 🚀 COMANDOS PARA COMEÇAR
+
+```bash
+# Backend
+cd backend
+npm install
+npm run download-dataset    # Baixa JSON + imagens
+npx prisma generate
+npx prisma migrate dev --name init
+npx prisma db seed
+npm run dev
+
+# Frontend
+cd frontend
+npm install
+npx expo start
+```
+
+---
+
+**Fim do Histórico**
